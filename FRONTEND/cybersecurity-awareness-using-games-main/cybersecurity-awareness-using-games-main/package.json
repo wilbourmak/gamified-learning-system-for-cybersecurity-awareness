@@ -1,0 +1,13 @@
+{
+  "name": "cyberguard-academy",
+  "version": "1.0.0",
+  "description": "Interactive cybersecurity games for digital competency training",
+  "main": "index.html",
+  "scripts": {
+    "start": "python -m http.server 8000",
+    "dev": "python -m http.server 8000"
+  },
+  "keywords": ["cybersecurity", "education", "games", "digital-literacy", "interactive-learning"],
+  "author": "Mbuvi Makeo",
+  "license": "MIT"
+}

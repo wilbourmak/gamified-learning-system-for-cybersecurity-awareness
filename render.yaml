@@ -1,0 +1,52 @@
+# Render deployment configuration
+# This file tells Render how to deploy your application
+
+services:
+  # Backend API Service
+  - type: web
+    name: cyberguard-backend
+    runtime: node
+    region: oregon  # or singapore, frankfurt, etc.
+    rootDir: BACKEND
+    buildCommand: npm install
+    startCommand: node server-sqlite.js
+    envVars:
+      - key: JWT_SECRET
+        generateValue: true  # Render will generate a random value
+      - key: PORT
+        value: 10000  # Render requires this port
+      - key: FRONTEND_URL
+        value: https://cyberguard-frontend.onrender.com  # Update this after deploying frontend
+      - key: NODE_ENV
+        value: production
+    # Persist database between deployments
+    disk:
+      name: database
+      mountPath: /opt/render/project/src/BACKEND
+      sizeGB: 1
+    healthCheckPath: /api/health  # We'll add this endpoint
+    autoDeploy: true
+
+  # Frontend Static Site
+  - type: static
+    name: cyberguard-frontend
+    runtime: static
+    region: oregon
+    rootDir: FRONTEND
+    buildCommand: echo "No build required"
+    publish: ./
+    headers:
+      - path: /*
+        name: X-Frame-Options
+        value: DENY
+      - path: /*
+        name: X-Content-Type-Options
+        value: nosniff
+    # Routes for SPA (Single Page Application)
+    routes:
+      - type: rewrite
+        source: /api/*
+        destination: https://cyberguard-backend.onrender.com/api/:splat
+      - type: rewrite
+        source: /*
+        destination: /index.html

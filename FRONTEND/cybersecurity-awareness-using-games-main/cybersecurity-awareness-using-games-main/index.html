@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CyberGuard Academy - Digital Security Games</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-logo">
+                <i class="fas fa-shield-alt"></i>
+                <span class="logo-text">CyberGuard Academy</span>
+            </div>
+            <div class="nav-score">
+                <div class="score-display">
+                    <i class="fas fa-trophy"></i>
+                    <span id="totalScore">0</span> Points
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="hero-background">
+            <div class="floating-shape shape-1"></div>
+            <div class="floating-shape shape-2"></div>
+            <div class="floating-shape shape-3"></div>
+            <div class="floating-shape shape-4"></div>
+        </div>
+        
+        <div class="hero-content">
+            <h1 class="hero-title">
+                <span class="cyber-text">Master</span>
+                <span class="gradient-text">Cybersecurity</span>
+                <span class="neon-text">Through Play</span>
+            </h1>
+            <p class="hero-subtitle">
+                Interactive games to boost your digital security skills
+            </p>
+            <div class="hero-stats">
+                <div class="stat-card">
+                    <div class="stat-number" id="gamesCompleted">0</div>
+                    <div class="stat-label">Games Completed</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="skillLevel">Beginner</div>
+                    <div class="stat-label">Skill Level</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="achievements">0</div>
+                    <div class="stat-label">Achievements</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Games Section -->
+    <section class="games-section">
+        <div class="container">
+            <h2 class="section-title">Choose Your Challenge</h2>
+            
+            <div class="games-grid">
+                <!-- Password Game -->
+                <div class="game-card" data-game="password">
+                    <div class="game-icon">
+                        <i class="fas fa-key"></i>
+                    </div>
+                    <h3>Password Guardian</h3>
+                    <p>Learn to create unbreakable passwords and spot weak ones</p>
+                    <div class="game-difficulty">
+                        <span class="difficulty-badge easy">Easy</span>
+                    </div>
+                    <div class="game-stats">
+                        <span><i class="fas fa-clock"></i> 5-10 min</span>
+                        <span><i class="fas fa-star"></i> 100 pts</span>
+                    </div>
+                    <button class="play-btn" onclick="startGame('password')">
+                        <i class="fas fa-play"></i> Play Now
+                    </button>
+                </div>
+
+                <!-- Phishing Game -->
+                <div class="game-card" data-game="phishing">
+                    <div class="game-icon">
+                        <i class="fas fa-fishing-hook"></i>
+                    </div>
+                    <h3>Phish Detective</h3>
+                    <p>Identify and avoid malicious websites and emails</p>
+                    <div class="game-difficulty">
+                        <span class="difficulty-badge medium">Medium</span>
+                    </div>
+                    <div class="game-stats">
+                        <span><i class="fas fa-clock"></i> 10-15 min</span>
+                        <span><i class="fas fa-star"></i> 200 pts</span>
+                    </div>
+                    <button class="play-btn" onclick="startGame('phishing')">
+                        <i class="fas fa-play"></i> Play Now
+                    </button>
+                </div>
+
+                <!-- File Sharing Game -->
+                <div class="game-card" data-game="fileshare">
+                    <div class="game-icon">
+                        <i class="fas fa-share-alt"></i>
+                    </div>
+                    <h3>SecureShare Master</h3>
+                    <p>Master the art of safe file sharing and permissions</p>
+                    <div class="game-difficulty">
+                        <span class="difficulty-badge hard">Hard</span>
+                    </div>
+                    <div class="game-stats">
+                        <span><i class="fas fa-clock"></i> 15-20 min</span>
+                        <span><i class="fas fa-star"></i> 300 pts</span>
+                    </div>
+                    <button class="play-btn" onclick="startGame('fileshare')">
+                        <i class="fas fa-play"></i> Play Now
+                    </button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Game Modal -->
+    <div id="gameModal" class="game-modal">
+        <div class="game-modal-content">
+            <div class="game-header">
+                <h3 id="gameTitle">Game Title</h3>
+                <button class="close-btn" onclick="closeGame()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="game-area" id="gameArea">
+                <!-- Game content will be loaded here -->
+            </div>
+            <div class="game-footer">
+                <div class="game-progress">
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progressFill"></div>
+                    </div>
+                    <span id="progressText">0/10</span>
+                </div>
+                <div class="game-score">
+                    Score: <span id="gameScore">0</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Achievement Notification -->
+    <div id="achievementNotification" class="achievement-notification">
+        <div class="achievement-content">
+            <i class="fas fa-trophy"></i>
+            <div class="achievement-text">
+                <h4 id="achievementTitle">Achievement Unlocked!</h4>
+                <p id="achievementDesc">You've mastered password security!</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Leaderboard -->
+    <section class="leaderboard-section">
+        <div class="container">
+            <h2 class="section-title">Hall of Fame</h2>
+            <div class="leaderboard-card">
+                <div class="leaderboard-header">
+                    <i class="fas fa-crown"></i>
+                    <span>Top Cyber Guardians</span>
+                </div>
+                <div class="leaderboard-list" id="leaderboardList">
+                    <div class="leaderboard-item">
+                        <span class="rank">1</span>
+                        <span class="name">CyberMaster</span>
+                        <span class="score">2,500 pts</span>
+                    </div>
+                    <div class="leaderboard-item">
+                        <span class="rank">2</span>
+                        <span class="name">SecureNinja</span>
+                        <span class="score">2,200 pts</span>
+                    </div>
+                    <div class="leaderboard-item">
+                        <span class="rank">3</span>
+                        <span class="name">GuardianPro</span>
+                        <span class="score">1,950 pts</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h4>CyberGuard Academy</h4>
+                    <p>Making cybersecurity education fun and interactive</p>
+                </div>
+                <div class="footer-section">
+                    <h4>Games</h4>
+                    <ul>
+                        <li><a href="#" onclick="startGame('password')">Password Guardian</a></li>
+                        <li><a href="#" onclick="startGame('phishing')">Phish Detective</a></li>
+                        <li><a href="#" onclick="startGame('fileshare')">SecureShare Master</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h4>Learn More</h4>
+                    <ul>
+                        <li><a href="#">Cybersecurity Tips</a></li>
+                        <li><a href="#">Best Practices</a></li>
+                        <li><a href="#">Resources</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2024 CyberGuard Academy. Securing the digital future through education.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>

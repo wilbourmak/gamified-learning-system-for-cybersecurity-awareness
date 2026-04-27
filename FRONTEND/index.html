@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CyberGuard Academy - Digital Security Games</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-logo">
+                <i class="fas fa-shield-alt"></i>
+                <span class="logo-text">CyberGuard Academy</span>
+            </div>
+            <div class="nav-actions">
+                <div class="nav-score">
+                    <div class="score-display">
+                        <i class="fas fa-trophy"></i>
+                        <span id="totalScore">0</span> Points
+                    </div>
+                </div>
+                <div id="authButtons" class="auth-buttons">
+                    <button class="btn-login" onclick="showAuthModal()">
+                        <i class="fas fa-user"></i> Login
+                    </button>
+                    <button class="btn-admin-login" onclick="showAdminLoginModal()">
+                        <i class="fas fa-shield-alt"></i> Admin
+                    </button>
+                </div>
+                <div id="userMenu" class="user-menu hidden">
+                    <button class="btn-reports" onclick="showReportModal()" title="Generate Report">
+                        <i class="fas fa-chart-line"></i>
+                    </button>
+                    <button class="btn-achievements" onclick="showAchievementsModal()" title="My Achievements">
+                        <i class="fas fa-trophy"></i>
+                    </button>
+                    <button class="btn-reset" onclick="confirmResetProgress()" title="Reset Progress">
+                        <i class="fas fa-redo-alt"></i>
+                    </button>
+                    <span id="userName" class="user-name"></span>
+                    <button class="btn-logout" onclick="logout()">
+                        <i class="fas fa-sign-out-alt"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="hero-background">
+            <div class="floating-shape shape-1"></div>
+            <div class="floating-shape shape-2"></div>
+            <div class="floating-shape shape-3"></div>
+            <div class="floating-shape shape-4"></div>
+        </div>
+        
+        <div class="hero-content">
+            <h1 class="hero-title">
+                <span class="cyber-text">Master</span>
+                <span class="gradient-text">Cybersecurity</span>
+                <span class="neon-text">Through Play</span>
+            </h1>
+            <p class="hero-subtitle">
+                Interactive games to boost your digital security skills
+            </p>
+            <div class="hero-stats">
+                <div class="stat-card">
+                    <div class="stat-number" id="gamesCompleted">0</div>
+                    <div class="stat-label">Games Completed</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="skillLevel">Beginner</div>
+                    <div class="stat-label">Skill Level</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="achievements">0</div>
+                    <div class="stat-label">Achievements</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Games Section -->
+    <section class="games-section">
+        <div class="container">
+            <h2 class="section-title">Choose Your Challenge</h2>
+            
+            <div class="games-grid">
+                <!-- Password Game -->
+                <div class="game-card" data-game="password">
+                    <div class="game-icon">
+                        <i class="fas fa-key"></i>
+                    </div>
+                    <h3>Password Guardian</h3>
+                    <p>Learn to create unbreakable passwords and spot weak ones</p>
+                    <div class="game-difficulty">
+                        <span class="difficulty-badge easy">Easy</span>
+                    </div>
+                    <div class="game-stats">
+                        <span><i class="fas fa-clock"></i> 5-10 min</span>
+                        <span><i class="fas fa-star"></i> 100 pts</span>
+                    </div>
+                    <button class="play-btn" onclick="startGame('password')">
+                        <i class="fas fa-play"></i> Play Now
+                    </button>
+                </div>
+
+                <!-- Phishing Game -->
+                <div class="game-card" data-game="phishing">
+                    <div class="game-icon">
+                        <i class="fas fa-fishing-hook"></i>
+                    </div>
+                    <h3>Phish Detective</h3>
+                    <p>Identify and avoid malicious websites and emails</p>
+                    <div class="game-difficulty">
+                        <span class="difficulty-badge medium">Medium</span>
+                    </div>
+                    <div class="game-stats">
+                        <span><i class="fas fa-clock"></i> 10-15 min</span>
+                        <span><i class="fas fa-star"></i> 200 pts</span>
+                    </div>
+                    <button class="play-btn" onclick="startGame('phishing')">
+                        <i class="fas fa-play"></i> Play Now
+                    </button>
+                </div>
+
+                <!-- File Sharing Game -->
+                <div class="game-card" data-game="fileshare">
+                    <div class="game-icon">
+                        <i class="fas fa-share-alt"></i>
+                    </div>
+                    <h3>SecureShare Master</h3>
+                    <p>Master the art of safe file sharing and permissions</p>
+                    <div class="game-difficulty">
+                        <span class="difficulty-badge hard">Hard</span>
+                    </div>
+                    <div class="game-stats">
+                        <span><i class="fas fa-clock"></i> 15-20 min</span>
+                        <span><i class="fas fa-star"></i> 300 pts</span>
+                    </div>
+                    <button class="play-btn" onclick="startGame('fileshare')">
+                        <i class="fas fa-play"></i> Play Now
+                    </button>
+                </div>
+
+                <!-- URL Scanner Game -->
+                <div class="game-card" data-game="urlscanner">
+                    <div class="game-icon">
+                        <i class="fas fa-globe"></i>
+                    </div>
+                    <h3>URL Guardian</h3>
+                    <p>Check if websites are safe or malicious</p>
+                    <div class="game-difficulty">
+                        <span class="difficulty-badge medium">Medium</span>
+                    </div>
+                    <div class="game-stats">
+                        <span><i class="fas fa-clock"></i> 5-10 min</span>
+                        <span><i class="fas fa-star"></i> 150 pts</span>
+                    </div>
+                    <button class="play-btn" onclick="startGame('urlscanner')">
+                        <i class="fas fa-play"></i> Play Now
+                    </button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Game Modal -->
+    <div id="gameModal" class="game-modal">
+        <div class="game-modal-content">
+            <div class="game-header">
+                <h3 id="gameTitle">Game Title</h3>
+                <button class="close-btn" onclick="closeGame()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="game-area" id="gameArea">
+                <!-- Game content will be loaded here -->
+            </div>
+            <div class="game-footer">
+                <div class="game-progress">
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progressFill"></div>
+                    </div>
+                    <span id="progressText">0/10</span>
+                </div>
+                <div class="game-score">
+                    Score: <span id="gameScore">0</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Auth Modal -->
+    <div id="authModal" class="auth-modal">
+        <div class="auth-modal-content">
+            <button class="close-btn" onclick="closeAuthModal()">
+                <i class="fas fa-times"></i>
+            </button>
+            <div class="auth-tabs">
+                <button class="auth-tab" onclick="switchAuthTab('login')" id="loginTab">Sign In</button>
+                <button class="auth-tab active" onclick="switchAuthTab('register')" id="registerTab">Create Account</button>
+            </div>
+            
+            <!-- Login Form -->
+            <form id="loginForm" class="auth-form hidden" onsubmit="handleLogin(event)">
+                <h3>Welcome Back!</h3>
+                <div class="form-group">
+                    <label><i class="fas fa-envelope"></i> Email</label>
+                    <input type="email" id="loginEmail" required placeholder="Enter your email">
+                </div>
+                <div class="form-group">
+                    <label><i class="fas fa-lock"></i> Password</label>
+                    <input type="password" id="loginPassword" required placeholder="Enter your password">
+                </div>
+                <div class="forgot-password-link">
+                    <a href="#" onclick="showForgotPassword()">Forgot Password?</a>
+                </div>
+                <button type="submit" class="auth-submit">
+                    <i class="fas fa-sign-in-alt"></i> Sign In
+                </button>
+                <p id="loginError" class="auth-error"></p>
+                <p class="auth-switch-text">
+                    Don't have an account? <a href="#" onclick="switchAuthTab('register')">Create one</a>
+                </p>
+            </form>
+            
+            <!-- Register Form -->
+            <form id="registerForm" class="auth-form" onsubmit="handleRegister(event)">
+                <h3>Join CyberGuard Academy</h3>
+                <div class="form-group">
+                    <label><i class="fas fa-user"></i> Username</label>
+                    <input type="text" id="registerUsername" required placeholder="Choose a username" minlength="3">
+                </div>
+                <div class="form-group">
+                    <label><i class="fas fa-envelope"></i> Email</label>
+                    <input type="email" id="registerEmail" required placeholder="Enter your email">
+                </div>
+                <div class="form-group">
+                    <label><i class="fas fa-lock"></i> Password</label>
+                    <input type="password" id="registerPassword" required placeholder="Create a password" minlength="6">
+                </div>
+                <button type="submit" class="auth-submit">
+                    <i class="fas fa-user-plus"></i> Create Account
+                </button>
+                <p id="registerError" class="auth-error"></p>
+                <p class="auth-switch-text">
+                    Already have an account? <a href="#" onclick="switchAuthTab('login')">Sign in</a>
+                </p>
+            </form>
+
+            <!-- Forgot Password Form -->
+            <form id="forgotPasswordForm" class="auth-form hidden" onsubmit="handleForgotPassword(event)">
+                <h3>Reset Password</h3>
+                <p style="text-align: center; color: rgba(255,255,255,0.7); margin-bottom: 1rem;">Enter your email and we'll send you a reset link.</p>
+                <div class="form-group">
+                    <label><i class="fas fa-envelope"></i> Email</label>
+                    <input type="email" id="forgotEmail" required placeholder="Enter your email">
+                </div>
+                <button type="submit" class="auth-submit">
+                    <i class="fas fa-paper-plane"></i> Send Reset Link
+                </button>
+                <p id="forgotError" class="auth-error"></p>
+                <p style="text-align: center; margin-top: 1rem;">
+                    <a href="#" onclick="backToLogin()">Back to Login</a>
+                </p>
+            </form>
+
+            <!-- Reset Password Form -->
+            <form id="resetPasswordForm" class="auth-form hidden" onsubmit="handleResetPassword(event)">
+                <h3>Create New Password</h3>
+                <input type="hidden" id="resetToken">
+                <div class="form-group">
+                    <label><i class="fas fa-lock"></i> New Password</label>
+                    <input type="password" id="newResetPassword" required placeholder="Enter new password" minlength="6">
+                </div>
+                <button type="submit" class="auth-submit">
+                    <i class="fas fa-save"></i> Reset Password
+                </button>
+                <p id="resetError" class="auth-error"></p>
+            </form>
+        </div>
+    </div>
+
+    <!-- Leaderboard Modal -->
+    <div id="leaderboardModal" class="leaderboard-modal">
+        <div class="leaderboard-modal-content">
+            <div class="leaderboard-header-section">
+                <h2><i class="fas fa-trophy"></i> Global Leaderboard</h2>
+                <button class="close-btn" onclick="closeLeaderboardModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="leaderboard-tabs">
+                <button class="leaderboard-tab active" onclick="loadLeaderboard('global')">Global</button>
+                <button class="leaderboard-tab" onclick="loadLeaderboard('password')">Password Game</button>
+                <button class="leaderboard-tab" onclick="loadLeaderboard('phishing')">Phishing Game</button>
+            </div>
+            <div id="leaderboardContent" class="leaderboard-content">
+                <div class="leaderboard-loading">
+                    <i class="fas fa-spinner fa-spin"></i> Loading...
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="achievementNotification" class="achievement-notification">
+        <div class="achievement-content">
+            <i class="fas fa-trophy"></i>
+            <div class="achievement-text">
+                <h4 id="achievementTitle">Achievement Unlocked!</h4>
+                <p id="achievementDesc">You've mastered password security!</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Leaderboard -->
+    <section class="leaderboard-section">
+        <div class="container">
+            <h2 class="section-title">Hall of Fame</h2>
+            <div class="leaderboard-card">
+                <div class="leaderboard-header">
+                    <i class="fas fa-crown"></i>
+                    <span>Top Cyber Guardians</span>
+                </div>
+                <div class="leaderboard-list" id="leaderboardList">
+                    <div class="leaderboard-item">
+                        <span class="rank">1</span>
+                        <span class="name">CyberMaster</span>
+                        <span class="score">2,500 pts</span>
+                    </div>
+                    <div class="leaderboard-item">
+                        <span class="rank">2</span>
+                        <span class="name">SecureNinja</span>
+                        <span class="score">2,200 pts</span>
+                    </div>
+                    <div class="leaderboard-item">
+                        <span class="rank">3</span>
+                        <span class="name">GuardianPro</span>
+                        <span class="score">1,950 pts</span>
+                    </div>
+                </div>
+                <div style="text-align: center;">
+                    <button class="view-leaderboard-btn" onclick="showLeaderboardModal()">
+                        <i class="fas fa-trophy"></i> View Full Leaderboard
+                    </button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Achievements Section -->
+    <section class="achievements-section">
+        <div class="container">
+            <h2 class="section-title"><i class="fas fa-medal"></i> Your Achievements</h2>
+            <div id="achievementsList" class="achievements-grid">
+                <!-- Achievements will be loaded here -->
+                <div class="achievement-card locked">
+                    <div class="achievement-icon"><i class="fas fa-lock"></i></div>
+                    <h4>Login to see your achievements</h4>
+                    <p>Play games and unlock achievements!</p>
+                    <span class="achievement-points">0 pts</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Achievements Viewer Modal -->
+    <div id="achievementsModal" class="modal">
+        <div class="modal-content" style="max-width: 900px; max-height: 80vh; overflow-y: auto;">
+            <div class="modal-header">
+                <h2><i class="fas fa-trophy"></i> Your Achievements</h2>
+                <button class="close-btn" onclick="closeAchievementsModal()">&times;</button>
+            </div>
+            <div id="achievementsViewerContent" style="padding: 2rem;">
+                <div class="achievements-grid" id="achievementsViewerGrid">
+                    <!-- Achievements loaded here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h4>CyberGuard Academy</h4>
+                    <p>Making cybersecurity education fun and interactive</p>
+                </div>
+                <div class="footer-section">
+                    <h4>Games</h4>
+                    <ul>
+                        <li><a href="#" onclick="startGame('password')">Password Guardian</a></li>
+                        <li><a href="#" onclick="startGame('phishing')">Phish Detective</a></li>
+                        <li><a href="#" onclick="startGame('fileshare')">SecureShare Master</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h4>Learn More</h4>
+                    <ul>
+                        <li><a href="#" onclick="showLearnMoreModal('tips')">Cybersecurity Tips</a></li>
+                        <li><a href="#" onclick="showLearnMoreModal('practices')">Best Practices</a></li>
+                        <li><a href="#" onclick="showLearnMoreModal('resources')">Resources</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2024 CyberGuard Academy. Securing the digital future through education.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Learn More Modal -->
+    <div id="learnMoreModal" class="modal">
+        <div class="modal-content" style="max-width: 800px; max-height: 80vh; overflow-y: auto;">
+            <div class="modal-header">
+                <h2 id="learnMoreTitle"><i class="fas fa-book-open"></i> Cybersecurity Tips</h2>
+                <button class="close-btn" onclick="closeLearnMoreModal()">&times;</button>
+            </div>
+            <div id="learnMoreContent" style="padding: 2rem;">
+                <!-- Content loaded dynamically -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Report Modal -->
+    <div id="reportModal" class="modal">
+        <div class="modal-content" style="max-width: 1000px; max-height: 85vh; overflow-y: auto;">
+            <div class="modal-header">
+                <h2><i class="fas fa-file-alt"></i> Comprehensive Backend Report</h2>
+                <button class="close-btn" onclick="closeReportModal()">&times;</button>
+            </div>
+            <div id="reportContent" style="padding: 2rem;">
+                <!-- Report content loaded dynamically -->
+                <div id="reportLoading" class="report-loading" style="text-align: center; padding: 3rem;">
+                    <i class="fas fa-spinner fa-spin" style="font-size: 2rem; color: var(--cyber-blue); margin-bottom: 1rem; display: block;"></i>
+                    <p>Generating comprehensive report...</p>
+                </div>
+            </div>
+            <div id="reportActions" style="padding: 1rem 2rem; border-top: 1px solid rgba(255,255,255,0.1); display: flex; justify-content: flex-end; gap: 1rem; display: none;">
+                <button class="btn-secondary" onclick="downloadReportAsJSON()">
+                    <i class="fas fa-download"></i> Download JSON
+                </button>
+                <button class="btn-primary" onclick="printReport()">
+                    <i class="fas fa-print"></i> Print Report
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Admin Login Modal -->
+    <div id="adminLoginModal" class="admin-modal">
+        <div class="admin-modal-content">
+            <button class="close-btn" onclick="closeAdminLoginModal()">
+                <i class="fas fa-times"></i>
+            </button>
+            <div class="admin-login-header">
+                <i class="fas fa-shield-alt" style="font-size: 3rem; color: var(--cyber-red); margin-bottom: 1rem;"></i>
+                <h2>Admin Access</h2>
+                <p style="color: rgba(255,255,255,0.6);">Secure Administrative Dashboard</p>
+            </div>
+            <form id="adminLoginForm" class="admin-form" onsubmit="handleAdminLogin(event)">
+                <div class="form-group">
+                    <label><i class="fas fa-envelope"></i> Admin Email</label>
+                    <input type="email" id="adminEmail" required placeholder="admin@cyberguard.com">
+                </div>
+                <div class="form-group">
+                    <label><i class="fas fa-lock"></i> Admin Password</label>
+                    <input type="password" id="adminPassword" required placeholder="Enter admin password" minlength="6">
+                </div>
+                <button type="submit" class="admin-submit">
+                    <i class="fas fa-shield-alt"></i> Access Dashboard
+                </button>
+                <p id="adminLoginError" class="auth-error"></p>
+            </form>
+        </div>
+    </div>
+
+    <!-- Admin Dashboard -->
+    <div id="adminDashboard" class="admin-dashboard hidden">
+        <div class="admin-sidebar">
+            <div class="admin-logo">
+                <i class="fas fa-shield-alt"></i>
+                <span>Admin Panel</span>
+            </div>
+            <nav class="admin-nav">
+                <button class="admin-nav-item active" onclick="showAdminSection('overview')">
+                    <i class="fas fa-chart-line"></i> Overview
+                </button>
+                <button class="admin-nav-item" onclick="showAdminSection('reports')">
+                    <i class="fas fa-file-alt"></i> Reports
+                </button>
+                <button class="admin-nav-item" onclick="showAdminSection('users')">
+                    <i class="fas fa-users"></i> Users
+                </button>
+                <button class="admin-nav-item" onclick="showAdminSection('security')">
+                    <i class="fas fa-shield-alt"></i> Security
+                </button>
+            </nav>
+            <button class="admin-logout" onclick="adminLogout()">
+                <i class="fas fa-sign-out-alt"></i> Logout
+            </button>
+        </div>
+        <div class="admin-main">
+            <div class="admin-header">
+                <h1><i class="fas fa-shield-alt"></i> Administrative Dashboard</h1>
+                <div class="admin-user">
+                    <span id="adminUserName">Admin</span>
+                    <i class="fas fa-user-shield"></i>
+                </div>
+            </div>
+            <div class="admin-content" id="adminContent">
+                <!-- Admin content loaded dynamically -->
+            </div>
+        </div>
+    </div>
+
+    <script src="api.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
