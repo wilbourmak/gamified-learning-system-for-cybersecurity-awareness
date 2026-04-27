@@ -16,7 +16,7 @@ services:
       - key: PORT
         value: 10000
       - key: FRONTEND_URL
-        value: https://your-netlify-site.netlify.app
+        value: https://cyberguardg.netlify.app
       - key: NODE_ENV
         value: production
     disk:
