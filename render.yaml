@@ -1,5 +1,5 @@
-# Render deployment configuration
-# This file tells Render how to deploy your application
+# Render deployment configuration for Backend API only
+# Frontend is deployed on Netlify
 
 services:
   # Backend API Service
@@ -16,7 +16,7 @@ services:
       - key: PORT
         value: 10000
       - key: FRONTEND_URL
-        value: https://cyberguard-frontend.onrender.com
+        value: https://your-netlify-site.netlify.app
       - key: NODE_ENV
         value: production
     disk:
@@ -24,17 +24,4 @@ services:
       mountPath: /opt/render/project/src/BACKEND
       sizeGB: 1
     healthCheckPath: /api/health
-    autoDeploy: true
-
-  # Frontend Static Site (using web type with http-server)
-  - type: web
-    name: cyberguard-frontend
-    runtime: node
-    region: oregon
-    rootDir: FRONTEND
-    buildCommand: npm install
-    startCommand: npx http-server -p 8080
-    envVars:
-      - key: PORT
-        value: 8080
     autoDeploy: true

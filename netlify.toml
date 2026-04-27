@@ -1,0 +1,33 @@
+# Netlify deployment configuration
+# Frontend deployment for CyberGuard Academy
+
+[build]
+  # Directory to publish
+  publish = "FRONTEND"
+  
+  # No build command needed (static HTML/CSS/JS)
+  command = "echo 'No build required'"
+
+[build.environment]
+  NODE_VERSION = "18"
+
+# Redirects for SPA (Single Page Application)
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+# Headers for security
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-Content-Type-Options = "nosniff"
+    X-XSS-Protection = "1; mode=block"
+
+# API proxy to backend (optional - can also use direct API calls)
+[[redirects]]
+  from = "/api/*"
+  to = "https://cyberguard-backend.onrender.com/api/:splat"
+  status = 200
+  force = true
