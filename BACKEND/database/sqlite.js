@@ -414,8 +414,7 @@ const dbHelpers = {
             security_scans: scanStats,
             system: systemHealth
         };
-    }
-};
+    },
 
     // Create default admin user
     createDefaultAdminUser: () => {
