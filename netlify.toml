@@ -24,10 +24,3 @@
     X-Frame-Options = "DENY"
     X-Content-Type-Options = "nosniff"
     X-XSS-Protection = "1; mode=block"
-
-# API proxy to backend (optional - can also use direct API calls)
-[[redirects]]
-  from = "/api/*"
-  to = "https://cyberguard-backend.onrender.com/api/:splat"
-  status = 200
-  force = true
