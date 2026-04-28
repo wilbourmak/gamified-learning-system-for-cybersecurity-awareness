@@ -1,7 +1,7 @@
 // CyberGuard Academy - API Service
 // Handles all communication with the backend API
 
-const API_BASE_URL = 'http://localhost:5003/api';
+const API_BASE_URL = 'https://cyberguard-th6z.onrender.com/api';
 
 class ApiService {
     constructor() {
