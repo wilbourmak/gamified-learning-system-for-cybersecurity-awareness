@@ -11,7 +11,10 @@ const app = express();
 
 // CORS
 app.use(cors({
-    origin: true,
+    origin: [
+        'http://localhost:8000',
+        'https://cyberguardg.netlify.app'
+    ],
     credentials: true
 }));
 
