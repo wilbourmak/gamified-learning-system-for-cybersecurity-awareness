@@ -1213,18 +1213,18 @@ async function handleForgotPassword(event) {
     event.preventDefault();
     const email = document.getElementById('forgotEmail').value;
     const errorEl = document.getElementById('forgotError');
+    const successEl = document.getElementById('forgotSuccess');
 
     try {
         const response = await api.forgotPassword(email);
         if (response.success) {
-            // For demo: show reset token to user
-            document.getElementById('resetToken').value = response.resetToken;
-            document.getElementById('forgotPasswordForm').classList.add('hidden');
-            document.getElementById('resetPasswordForm').classList.remove('hidden');
-            showNotification('Reset token generated. Enter your new password.', 'success');
+            successEl.textContent = response.message || 'If the email exists, a new password will be sent to your email address.';
+            errorEl.textContent = '';
+            showNotification('Password recovery email sent!', 'success');
         }
     } catch (error) {
-        errorEl.textContent = error.message || 'Failed to send reset request. Please try again.';
+        errorEl.textContent = error.message || 'Failed to send password recovery. Please try again.';
+        successEl.textContent = '';
     }
 }
 

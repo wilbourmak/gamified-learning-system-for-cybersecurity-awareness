@@ -164,6 +164,11 @@ const dbHelpers = {
         stmt.run(id);
     },
 
+    updateUserPassword: (id, hashedPassword) => {
+        const stmt = db.prepare('UPDATE users SET password = ? WHERE id = ?');
+        stmt.run(hashedPassword, id);
+    },
+
     // User Stats
     getUserStats: (userId) => {
         const stmt = db.prepare('SELECT * FROM user_stats WHERE user_id = ?');

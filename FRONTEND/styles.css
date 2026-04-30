@@ -1171,6 +1171,13 @@ body {
     min-height: 1.5rem;
 }
 
+.auth-success {
+    color: var(--cyber-green);
+    text-align: center;
+    font-size: 0.9rem;
+    min-height: 1.5rem;
+}
+
 /* Leaderboard Modal */
 .leaderboard-modal {
     display: none;

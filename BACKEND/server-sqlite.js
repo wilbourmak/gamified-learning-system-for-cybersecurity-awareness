@@ -3,9 +3,13 @@ const cors = require('cors');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const dotenv = require('dotenv');
+const nodemailer = require('nodemailer');
 const { db, initDatabase, dbHelpers } = require('./database/sqlite');
 
 dotenv.config();
+
+const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
+const PORT = process.env.PORT || 5003;
 
 const app = express();
 
@@ -33,8 +37,25 @@ app.get('/api/health', (req, res) => {
 // Initialize database
 initDatabase();
 
-// JWT secret
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
+// Email configuration
+const transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_APP_PASSWORD
+    }
+});
+
+// Generate random password
+const generatePassword = () => {
+    const length = 12;
+    const charset = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*';
+    let password = '';
+    for (let i = 0; i < length; i++) {
+        password += charset.charAt(Math.floor(Math.random() * charset.length));
+    }
+    return password;
+};
 
 // Auth middleware
 const authenticate = (req, res, next) => {
@@ -151,6 +172,63 @@ app.post('/api/auth/login', async (req, res) => {
     } catch (error) {
         console.error('Login error:', error);
         res.status(500).json({ success: false, message: 'Server error during login' });
+    }
+});
+
+// Password recovery request
+app.post('/api/auth/forgot-password', async (req, res) => {
+    try {
+        const { email } = req.body;
+
+        if (!email) {
+            return res.status(400).json({ success: false, message: 'Email is required' });
+        }
+
+        const user = dbHelpers.getUserByEmail(email);
+        if (!user) {
+            // Don't reveal if email exists for security
+            return res.json({ success: true, message: 'If the email exists, a new password will be sent' });
+        }
+
+        // Generate new password
+        const newPassword = generatePassword();
+        const hashedPassword = bcrypt.hashSync(newPassword, 10);
+
+        // Update password in database
+        dbHelpers.updateUserPassword(user.id, hashedPassword);
+
+        // Send email
+        const mailOptions = {
+            from: process.env.EMAIL_USER,
+            to: email,
+            subject: 'CyberGuard Academy - Password Recovery',
+            html: `
+                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+                    <h2 style="color: #00ff88;">CyberGuard Academy</h2>
+                    <p>Hello ${user.username},</p>
+                    <p>You requested a password recovery. Your new password is:</p>
+                    <div style="background: #1a1a2e; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                        <p style="color: #00ff88; font-size: 24px; font-weight: bold; letter-spacing: 2px;">${newPassword}</p>
+                    </div>
+                    <p>Please log in with this new password and change it immediately for security.</p>
+                    <p>If you did not request this change, please ignore this email.</p>
+                    <p style="color: #666; font-size: 12px;">This is an automated email. Please do not reply.</p>
+                </div>
+            `
+        };
+
+        try {
+            await transporter.sendMail(mailOptions);
+            console.log('Password recovery email sent to:', email);
+        } catch (emailError) {
+            console.error('Email send error:', emailError);
+            // Still return success to avoid revealing email existence
+        }
+
+        res.json({ success: true, message: 'If the email exists, a new password will be sent' });
+    } catch (error) {
+        console.error('Password recovery error:', error);
+        res.status(500).json({ success: false, message: 'Server error during password recovery' });
     }
 });
 
