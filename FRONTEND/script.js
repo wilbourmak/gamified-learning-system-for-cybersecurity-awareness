@@ -1904,7 +1904,7 @@ async function confirmResetProgress() {
 async function loadAchievements() {
     const container = document.getElementById('achievementsList');
     const countElement = document.getElementById('achievements');
-    
+
     if (!container) return;
 
     // If not logged in, show login prompt
@@ -1924,16 +1924,30 @@ async function loadAchievements() {
     }
 
     try {
-        // Get user's earned achievements from backend
-        const response = await api.getUserAchievements();
-        const achievements = response.success ? response.achievements : [];
+        // Get all achievements and user's earned achievements
+        const [allResponse, userResponse] = await Promise.all([
+            api.getAchievements(),
+            api.getUserAchievements()
+        ]);
 
-        // Update the count at the top
+        const allAchievements = allResponse.success ? allResponse.achievements : [];
+        const userAchievements = userResponse.success ? userResponse.achievements : [];
+
+        // Create a Set of earned achievement IDs for quick lookup
+        const earnedIds = new Set(userAchievements.map(a => a.achievement_id || a.id));
+
+        // Mark each achievement as earned or not
+        const achievementsWithStatus = allAchievements.map(ach => ({
+            ...ach,
+            earned: earnedIds.has(ach.achievement_id || ach.id)
+        }));
+
+        // Update the count at the top (earned achievements only)
         if (countElement) {
-            countElement.textContent = achievements.length;
+            countElement.textContent = userAchievements.length;
         }
 
-        renderAchievements(achievements);
+        renderAchievements(achievementsWithStatus);
     } catch (error) {
         console.error('Failed to load achievements:', error);
         container.innerHTML = `
@@ -1961,10 +1975,58 @@ function renderAchievements(achievements) {
         return;
     }
 
-    container.innerHTML = achievements.map(ach => `
-        <div class="achievement-card unlocked" style="
-            background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(6, 182, 212, 0.05));
-            border: 2px solid rgba(16, 185, 129, 0.4);
+    container.innerHTML = achievements.map(ach => {
+        const isEarned = ach.earned;
+        const cardStyle = isEarned
+            ? `
+                background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(6, 182, 212, 0.05));
+                border: 2px solid rgba(16, 185, 129, 0.4);
+            `
+            : `
+                background: linear-gradient(135deg, rgba(107, 114, 128, 0.1), rgba(75, 85, 99, 0.05));
+                border: 2px solid rgba(107, 114, 128, 0.3);
+                opacity: 0.7;
+            `;
+
+        const iconStyle = isEarned
+            ? `
+                background: linear-gradient(135deg, var(--cyber-gold, #fbbf24), var(--cyber-orange));
+                box-shadow: 0 4px 15px rgba(251, 191, 36, 0.3);
+            `
+            : `
+                background: linear-gradient(135deg, #6b7280, #4b5563);
+                box-shadow: 0 4px 15px rgba(107, 114, 128, 0.2);
+            `;
+
+        const titleStyle = isEarned ? 'color: var(--cyber-gold);' : 'color: #9ca3af;';
+        const badge = isEarned
+            ? `<span class="achievement-points" style="
+                display: inline-block;
+                background: linear-gradient(135deg, var(--cyber-gold), var(--cyber-orange));
+                padding: 0.4rem 1rem;
+                border-radius: 20px;
+                font-size: 0.9rem;
+                font-weight: 600;
+                color: white;
+            ">${ach.points || 0} pts</span>`
+            : `<span style="
+                display: inline-block;
+                background: rgba(107, 114, 128, 0.3);
+                padding: 0.4rem 1rem;
+                border-radius: 20px;
+                font-size: 0.9rem;
+                color: #9ca3af;
+            "><i class="fas fa-lock"></i> Locked</span>`;
+
+        const earnedDate = isEarned && ach.earnedAt
+            ? `<div style="font-size: 0.75rem; color: rgba(255,255,255,0.5); margin-top: 0.75rem;">
+                <i class="fas fa-calendar-check"></i> Earned ${new Date(ach.earnedAt).toLocaleDateString()}
+            </div>`
+            : '';
+
+        return `
+        <div class="achievement-card ${isEarned ? 'unlocked' : 'locked'}" style="
+            ${cardStyle}
             border-radius: 16px;
             padding: 1.5rem;
             text-align: center;
@@ -1973,33 +2035,22 @@ function renderAchievements(achievements) {
             <div class="achievement-icon" style="
                 width: 70px;
                 height: 70px;
-                background: linear-gradient(135deg, var(--cyber-gold, #fbbf24), var(--cyber-orange));
+                ${iconStyle}
                 border-radius: 50%;
                 display: flex;
                 align-items: center;
                 justify-content: center;
                 margin: 0 auto 1rem;
                 font-size: 1.8rem;
-                box-shadow: 0 4px 15px rgba(251, 191, 36, 0.3);
             ">
-                ${ach.icon || '🏆'}
+                ${isEarned ? (ach.icon || '🏆') : '🔒'}
             </div>
-            <h4 style="margin-bottom: 0.5rem; color: var(--cyber-gold);">${ach.name}</h4>
+            <h4 style="margin-bottom: 0.5rem; ${titleStyle}">${ach.name}</h4>
             <p style="font-size: 0.9rem; color: rgba(255,255,255,0.8); margin-bottom: 0.75rem;">${ach.description}</p>
-            <span class="achievement-points" style="
-                display: inline-block;
-                background: linear-gradient(135deg, var(--cyber-gold), var(--cyber-orange));
-                padding: 0.4rem 1rem;
-                border-radius: 20px;
-                font-size: 0.9rem;
-                font-weight: 600;
-                color: white;
-            ">${ach.points || 0} pts</span>
-            <div style="font-size: 0.75rem; color: rgba(255,255,255,0.5); margin-top: 0.75rem;">
-                <i class="fas fa-calendar-check"></i> Earned ${new Date(ach.earnedAt).toLocaleDateString()}
-            </div>
+            ${badge}
+            ${earnedDate}
         </div>
-    `).join('');
+    `}).join('');
 }
 
 // ============================================
