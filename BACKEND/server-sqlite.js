@@ -71,6 +71,20 @@ const authenticate = (req, res, next) => {
     }
 };
 
+// Admin middleware - verifies user has admin role
+const requireAdmin = async (req, res, next) => {
+    try {
+        const user = dbHelpers.getUserById(req.user.userId);
+        if (!user || user.role !== 'admin') {
+            return res.status(403).json({ success: false, message: 'Admin access required' });
+        }
+        req.adminUser = user;
+        next();
+    } catch (error) {
+        res.status(500).json({ success: false, message: 'Server error' });
+    }
+};
+
 // ========== AUTH ROUTES ==========
 
 // Register
@@ -493,8 +507,8 @@ app.get('/api/users/achievements', authenticate, (req, res) => {
     }
 });
 
-// Database report
-app.get('/api/admin/db-report', (req, res) => {
+// Database report (admin only)
+app.get('/api/admin/db-report', authenticate, requireAdmin, (req, res) => {
     try {
         const report = dbHelpers.getDatabaseReport();
         res.json({
@@ -541,16 +555,10 @@ app.post('/api/users/reset', authenticate, (req, res) => {
 });
 
 // Generate comprehensive backend report (admin only)
-app.get('/api/reports/comprehensive', authenticate, (req, res) => {
+app.get('/api/reports/comprehensive', authenticate, requireAdmin, (req, res) => {
     try {
-        // Check if user is admin
-        const user = dbHelpers.getUserById(req.user.userId);
-        if (!user || user.role !== 'admin') {
-            return res.status(403).json({ success: false, message: 'Admin access required' });
-        }
-        
         const report = dbHelpers.generateComprehensiveReport();
-        
+
         res.json({
             success: true,
             report: report
@@ -561,11 +569,11 @@ app.get('/api/reports/comprehensive', authenticate, (req, res) => {
     }
 });
 
-// Generate comprehensive backend report (available to all authenticated users)
-app.get('/api/reports/dashboard', authenticate, (req, res) => {
+// Generate dashboard report (admin only)
+app.get('/api/reports/dashboard', authenticate, requireAdmin, (req, res) => {
     try {
         const report = dbHelpers.generateComprehensiveReport();
-        
+
         res.json({
             success: true,
             report: report
