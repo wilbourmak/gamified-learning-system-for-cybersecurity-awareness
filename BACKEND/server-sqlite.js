@@ -158,6 +158,14 @@ app.post('/api/auth/login', async (req, res) => {
         // Update last login
         dbHelpers.updateLastLogin(user.id);
 
+        // Award first_login achievement if not already earned
+        const userAchievements = dbHelpers.getUserAchievements(user.id);
+        const hasFirstLogin = userAchievements.some(a => a.achievement_id === 'first_login');
+        if (!hasFirstLogin) {
+            dbHelpers.awardAchievement(user.id, 'first_login');
+            console.log('Awarded first_login achievement to user:', user.id);
+        }
+
         // Get stats
         const stats = dbHelpers.getUserStats(user.id) || { total_score: 0, games_completed: 0, achievements: '[]' };
         const achievements = dbHelpers.getUserAchievements(user.id);
