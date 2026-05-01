@@ -592,6 +592,53 @@ app.get('/api/reports/dashboard', authenticate, requireAdmin, (req, res) => {
     }
 });
 
+// Leaderboard - all registered users
+app.get('/api/leaderboard/global', (req, res) => {
+    try {
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 50;
+        const offset = (page - 1) * limit;
+
+        const leaderboard = db.prepare(`
+            SELECT u.id, u.username, u.email,
+                   COALESCE(s.total_score, 0) as total_score,
+                   COALESCE(s.games_completed, 0) as games_completed
+            FROM users u
+            LEFT JOIN user_stats s ON u.id = s.user_id
+            WHERE u.role != 'admin'
+            ORDER BY total_score DESC, u.created_at ASC
+            LIMIT ? OFFSET ?
+        `).all(limit, offset);
+
+        const total = db.prepare(`
+            SELECT COUNT(*) as count
+            FROM users
+            WHERE role != 'admin'
+        `).get().count;
+
+        res.json({
+            success: true,
+            leaderboard: leaderboard.map((entry, index) => ({
+                rank: offset + index + 1,
+                id: entry.id,
+                username: entry.username,
+                email: entry.email,
+                totalScore: entry.total_score,
+                gamesCompleted: entry.games_completed
+            })),
+            pagination: {
+                page,
+                limit,
+                total,
+                totalPages: Math.ceil(total / limit)
+            }
+        });
+    } catch (error) {
+        console.error('Leaderboard error:', error);
+        res.status(500).json({ success: false, message: 'Failed to load leaderboard' });
+    }
+});
+
 const PORT = 5003;
 app.listen(PORT, () => {
     console.log(`✅ SQLite Server running on port ${PORT}`);
