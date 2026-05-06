@@ -1850,6 +1850,10 @@ function renderAdminDashboardOverview(container, report) {
                     <div style="font-size: 2.5rem; font-weight: bold; color: #8b5cf6;">${report.summary?.total_security_scans || 0}</div>
                     <div style="color: rgba(255,255,255,0.8); font-size: 0.9rem;">Security Scans</div>
                 </div>
+                <div style="background: rgba(234, 179, 8, 0.1); padding: 1.5rem; border-radius: 12px; border-left: 4px solid #eab308;">
+                    <div style="font-size: 2.5rem; font-weight: bold; color: #eab308;">${report.summary?.total_points || 0}</div>
+                    <div style="color: rgba(255,255,255,0.8); font-size: 0.9rem;">Total Points Awarded</div>
+                </div>
             </div>
             
             <!-- System Info -->
@@ -1869,6 +1873,29 @@ function renderAdminDashboardOverview(container, report) {
                         <p style="margin: 0.25rem 0; font-weight: 600;">${report.user_activity?.active_today || 0}</p>
                     </div>
                 </div>
+            </div>
+            
+            <!-- Top Users by Points -->
+            <div style="background: rgba(255,255,255,0.05); padding: 1.5rem; border-radius: 12px; margin-bottom: 1.5rem;">
+                <h3 style="color: var(--cyber-gold); margin-bottom: 1rem;"><i class="fas fa-trophy"></i> Top Users by Total Points</h3>
+                ${report.users?.top_users_by_score?.length > 0 ? `
+                    <div style="display: grid; gap: 0.75rem;">
+                        ${report.users.top_users_by_score.slice(0, 5).map((user, index) => `
+                            <div style="display: flex; align-items: center; gap: 1rem; padding: 0.75rem; background: rgba(255,255,255,0.03); border-radius: 8px;">
+                                <div style="font-size: 1.25rem; font-weight: bold; color: ${index === 0 ? '#eab308' : index === 1 ? '#c0c0c0' : index === 2 ? '#cd7f32' : 'rgba(255,255,255,0.6)'};">
+                                    #${index + 1}
+                                </div>
+                                <div style="flex: 1;">
+                                    <div style="color: white; font-weight: 500;">${user.username || user.email}</div>
+                                    <div style="color: rgba(255,255,255,0.6); font-size: 0.85rem;">${user.games_completed || 0} games completed</div>
+                                </div>
+                                <div style="color: var(--cyber-gold); font-weight: bold; font-size: 1.1rem;">
+                                    ${user.total_score || 0} pts
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                ` : '<p style="color: rgba(255,255,255,0.6);">No game data yet</p>'}
             </div>
             
             <!-- Quick Actions -->

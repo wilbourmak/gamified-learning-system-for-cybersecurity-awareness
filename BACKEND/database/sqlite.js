@@ -405,6 +405,18 @@ const dbHelpers = {
             LIMIT 20
         `).all();
 
+        // Top users by total score
+        const topUsersByScore = db.prepare(`
+            SELECT u.id, u.username, u.email, u.created_at, 
+                   COALESCE(s.total_score, 0) as total_score, 
+                   COALESCE(s.games_completed, 0) as games_completed
+            FROM users u
+            LEFT JOIN user_stats s ON u.id = s.user_id
+            WHERE u.role != 'admin'
+            ORDER BY s.total_score DESC
+            LIMIT 10
+        `).all();
+
         // System health
         const dbSize = fs.statSync(DB_PATH).size;
         const systemHealth = {
@@ -430,11 +442,13 @@ const dbHelpers = {
                 total_games_played: gameStats.total_games_played,
                 total_achievements_earned: achievementStats.total_achievements_earned,
                 total_security_scans: scanStats.total_scans,
+                total_points: gameStats.total_points_awarded,
                 database_size_mb: systemHealth.database_size_mb
             },
             users: {
                 ...userStats,
-                recent_users: recentUsers
+                recent_users: recentUsers,
+                top_users_by_score: topUsersByScore
             },
             games: gameStats,
             achievements: achievementStats,
