@@ -1,17 +1,55 @@
 const express = require('express');
 const cors = require('cors');
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
+const { body, validationResult } = require('express-validator');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const crypto = require('crypto');
 const dotenv = require('dotenv');
 const nodemailer = require('nodemailer');
 const { db, initDatabase, dbHelpers } = require('./database/sqlite');
 
+// Validation helper
+const handleValidationErrors = (req, res, next) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        return res.status(400).json({
+            success: false,
+            message: 'Validation failed',
+            errors: errors.array().map(e => ({ field: e.path, message: e.msg }))
+        });
+    }
+    next();
+};
+
 dotenv.config();
 
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
+// Security: JWT_SECRET must be set in environment
+const JWT_SECRET = process.env.JWT_SECRET;
+if (!JWT_SECRET) {
+    console.error('ERROR: JWT_SECRET environment variable is required');
+    console.error('Please set a strong secret key in your .env file');
+    process.exit(1);
+}
 const PORT = process.env.PORT || 5003;
 
 const app = express();
+
+// Security middleware
+app.use(helmet({
+    contentSecurityPolicy: {
+        directives: {
+            defaultSrc: ["'self'"],
+            styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com", "https://cdnjs.cloudflare.com"],
+            fontSrc: ["'self'", "https://fonts.gstatic.com", "https://cdnjs.cloudflare.com"],
+            scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
+            imgSrc: ["'self'", "data:", "https:"],
+            connectSrc: ["'self'", "https://cyberguard-th6z.onrender.com"]
+        }
+    },
+    crossOriginEmbedderPolicy: false
+}));
 
 // CORS
 app.use(cors({
@@ -21,6 +59,26 @@ app.use(cors({
     ],
     credentials: true
 }));
+
+// Rate limiting for general API
+const generalLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 100, // limit each IP to 100 requests per windowMs
+    message: { success: false, message: 'Too many requests, please try again later' },
+    standardHeaders: true,
+    legacyHeaders: false
+});
+app.use('/api/', generalLimiter);
+
+// Stricter rate limiting for authentication endpoints
+const authLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 5, // 5 attempts per 15 minutes
+    message: { success: false, message: 'Too many authentication attempts, please try again after 15 minutes' },
+    standardHeaders: true,
+    legacyHeaders: false,
+    skipSuccessfulRequests: true // Don't count successful logins
+});
 
 app.use(express.json());
 
@@ -46,13 +104,14 @@ const transporter = nodemailer.createTransport({
     }
 });
 
-// Generate random password
+// Generate cryptographically secure random password
 const generatePassword = () => {
     const length = 12;
     const charset = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*';
     let password = '';
+    const randomBytes = crypto.randomBytes(length);
     for (let i = 0; i < length; i++) {
-        password += charset.charAt(Math.floor(Math.random() * charset.length));
+        password += charset.charAt(randomBytes[i] % charset.length);
     }
     return password;
 };
@@ -87,8 +146,12 @@ const requireAdmin = async (req, res, next) => {
 
 // ========== AUTH ROUTES ==========
 
-// Register
-app.post('/api/auth/register', async (req, res) => {
+// Register (with rate limiting and validation)
+app.post('/api/auth/register', authLimiter, [
+    body('email').isEmail().normalizeEmail().withMessage('Valid email is required'),
+    body('password').isLength({ min: 8 }).withMessage('Password must be at least 8 characters long'),
+    body('username').optional().trim().isLength({ min: 3, max: 30 }).withMessage('Username must be 3-30 characters')
+], handleValidationErrors, async (req, res) => {
     try {
         const { email, password, username } = req.body;
         
@@ -128,8 +191,11 @@ app.post('/api/auth/register', async (req, res) => {
     }
 });
 
-// Login
-app.post('/api/auth/login', async (req, res) => {
+// Login (with rate limiting and validation)
+app.post('/api/auth/login', authLimiter, [
+    body('email').isEmail().normalizeEmail().withMessage('Valid email is required'),
+    body('password').notEmpty().withMessage('Password is required')
+], handleValidationErrors, async (req, res) => {
     try {
         const { email, password } = req.body;
         
@@ -197,8 +263,10 @@ app.post('/api/auth/login', async (req, res) => {
     }
 });
 
-// Password recovery request
-app.post('/api/auth/forgot-password', async (req, res) => {
+// Password recovery request (with rate limiting and validation)
+app.post('/api/auth/forgot-password', authLimiter, [
+    body('email').isEmail().normalizeEmail().withMessage('Valid email is required')
+], handleValidationErrors, async (req, res) => {
     try {
         const { email } = req.body;
 
