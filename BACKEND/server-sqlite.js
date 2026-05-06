@@ -84,12 +84,33 @@ app.use(express.json());
 
 // Health check endpoint (for deployment monitoring)
 app.get('/api/health', (req, res) => {
-    res.json({ 
-        success: true, 
-        status: 'healthy',
-        timestamp: new Date().toISOString(),
-        service: 'CyberGuard Academy API'
-    });
+    try {
+        // Test database connectivity
+        const dbStatus = db.prepare('SELECT 1').get() ? 'connected' : 'error';
+        const stats = dbHelpers.getDatabaseReport();
+
+        res.json({
+            success: true,
+            status: 'healthy',
+            timestamp: new Date().toISOString(),
+            service: 'CyberGuard Academy API',
+            version: '1.0.0',
+            database: {
+                status: dbStatus,
+                tables: stats.tables || {},
+                size: stats.database_size || 'unknown'
+            },
+            uptime: process.uptime()
+        });
+    } catch (error) {
+        console.error('Health check error:', error);
+        res.status(503).json({
+            success: false,
+            status: 'unhealthy',
+            timestamp: new Date().toISOString(),
+            error: 'Database connectivity issue'
+        });
+    }
 });
 
 // Initialize database
@@ -135,13 +156,41 @@ const requireAdmin = async (req, res, next) => {
     try {
         const user = dbHelpers.getUserById(req.user.userId);
         if (!user || user.role !== 'admin') {
-            return res.status(403).json({ success: false, message: 'Admin access required' });
+            return res.status(403).json({
+                success: false,
+                errorCode: 'ADMIN_REQUIRED',
+                message: 'Admin access required'
+            });
         }
         req.adminUser = user;
         next();
     } catch (error) {
-        res.status(500).json({ success: false, message: 'Server error' });
+        res.status(500).json({
+            success: false,
+            errorCode: 'SERVER_ERROR',
+            message: 'Server error'
+        });
     }
+};
+
+// Error codes for consistent error handling
+const ERROR_CODES = {
+    AUTH_INVALID_CREDENTIALS: 'Invalid email or password',
+    AUTH_USER_EXISTS: 'Email already registered',
+    AUTH_TOKEN_EXPIRED: 'Token has expired',
+    AUTH_TOKEN_INVALID: 'Invalid token',
+    AUTH_REQUIRED: 'Authentication required',
+    ADMIN_REQUIRED: 'Admin access required',
+    VALIDATION_FAILED: 'Input validation failed',
+    RESOURCE_NOT_FOUND: 'Resource not found',
+    RATE_LIMIT_EXCEEDED: 'Too many requests',
+    SERVER_ERROR: 'Internal server error',
+    DB_ERROR: 'Database error'
+};
+
+// Async error handler wrapper
+const asyncHandler = (fn) => (req, res, next) => {
+    Promise.resolve(fn(req, res, next)).catch(next);
 };
 
 // ========== AUTH ROUTES ==========
@@ -705,6 +754,55 @@ app.get('/api/leaderboard/global', (req, res) => {
         console.error('Leaderboard error:', error);
         res.status(500).json({ success: false, message: 'Failed to load leaderboard' });
     }
+});
+
+// Global error handling middleware
+app.use((err, req, res, next) => {
+    console.error('Error:', err);
+
+    // Handle rate limit errors
+    if (err.status === 429) {
+        return res.status(429).json({
+            success: false,
+            errorCode: 'RATE_LIMIT_EXCEEDED',
+            message: err.message || 'Too many requests, please try again later'
+        });
+    }
+
+    // Handle validation errors
+    if (err.name === 'ValidationError') {
+        return res.status(400).json({
+            success: false,
+            errorCode: 'VALIDATION_FAILED',
+            message: err.message || 'Validation failed'
+        });
+    }
+
+    // Handle database errors
+    if (err.code && err.code.startsWith('SQLITE_')) {
+        return res.status(500).json({
+            success: false,
+            errorCode: 'DB_ERROR',
+            message: 'Database error occurred'
+        });
+    }
+
+    // Default error response
+    res.status(err.status || 500).json({
+        success: false,
+        errorCode: err.code || 'SERVER_ERROR',
+        message: err.message || 'Internal Server Error',
+        ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
+    });
+});
+
+// 404 handler
+app.use((req, res) => {
+    res.status(404).json({
+        success: false,
+        errorCode: 'RESOURCE_NOT_FOUND',
+        message: 'Route not found'
+    });
 });
 
 const PORT = 5003;
