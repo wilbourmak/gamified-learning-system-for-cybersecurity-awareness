@@ -1775,7 +1775,13 @@ async function adminLogout() {
     showNotification('Admin logged out successfully', 'success');
 }
 
+// Track current admin section to prevent race conditions
+let currentAdminSection = null;
+
 async function showAdminSection(section) {
+    // Update current section tracker
+    currentAdminSection = section;
+
     // Update active nav item
     document.querySelectorAll('.admin-nav-item').forEach(item => {
         item.classList.remove('active');
@@ -1783,9 +1789,17 @@ async function showAdminSection(section) {
     if (event && event.target) {
         event.target.classList.add('active');
     }
-    
+
     const content = document.getElementById('adminContent');
-    
+
+    // Clear content immediately to prevent overlap
+    content.innerHTML = `
+        <div style="text-align: center; padding: 3rem;">
+            <i class="fas fa-spinner fa-spin" style="font-size: 2rem; color: var(--cyber-blue);"></i>
+            <p style="margin-top: 1rem; color: rgba(255,255,255,0.6);">Loading...</p>
+        </div>
+    `;
+
     switch(section) {
         case 'overview':
             await renderAdminOverview(content);
@@ -1803,22 +1817,23 @@ async function showAdminSection(section) {
 }
 
 async function renderAdminOverview(container) {
-    container.innerHTML = `
-        <div style="text-align: center; padding: 3rem;">
-            <i class="fas fa-spinner fa-spin" style="font-size: 2rem; color: var(--cyber-blue);"></i>
-            <p style="margin-top: 1rem; color: rgba(255,255,255,0.6);">Loading dashboard data...</p>
-        </div>
-    `;
-    
+    // Don't re-show loading if already cleared by showAdminSection
+    // container.innerHTML = `...`; // Removed - already set by showAdminSection
+
     try {
         const response = await api.getComprehensiveReport();
+        // Only render if still on overview section
+        if (currentAdminSection !== 'overview') return;
+
         if (response.success) {
             renderAdminDashboardOverview(container, response.report);
         } else {
             container.innerHTML = `<p style="color: #ef4444; text-align: center;">Failed to load dashboard data</p>`;
         }
     } catch (error) {
-        container.innerHTML = `<p style="color: #ef4444; text-align: center;">Error: ${error.message}</p>`;
+        if (currentAdminSection === 'overview') {
+            container.innerHTML = `<p style="color: #ef4444; text-align: center;">Error: ${error.message}</p>`;
+        }
     }
 }
 
@@ -1827,7 +1842,7 @@ function renderAdminDashboardOverview(container, report) {
         <div style="max-width: 1200px;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
                 <h2 style="color: var(--cyber-gold); margin: 0;"><i class="fas fa-chart-line"></i> Dashboard Overview</h2>
-                <button class="btn-primary" onclick="generateAdminReport()">
+                <button class="btn-primary" onclick="refreshDashboardOverview()">
                     <i class="fas fa-sync"></i> Refresh Data
                 </button>
             </div>
@@ -1914,6 +1929,32 @@ function renderAdminDashboardOverview(container, report) {
     `;
 }
 
+async function refreshDashboardOverview() {
+    const container = document.getElementById('adminContent');
+    container.innerHTML = `
+        <div style="text-align: center; padding: 3rem;">
+            <i class="fas fa-spinner fa-spin" style="font-size: 2rem; color: var(--cyber-blue);"></i>
+            <p style="margin-top: 1rem; color: rgba(255,255,255,0.6);">Refreshing dashboard...</p>
+        </div>
+    `;
+
+    try {
+        const response = await api.getComprehensiveReport();
+        // Only render if still on overview section
+        if (currentAdminSection !== 'overview') return;
+
+        if (response.success) {
+            renderAdminDashboardOverview(container, response.report);
+        } else {
+            container.innerHTML = `<p style="color: #ef4444; text-align: center;">Failed to refresh dashboard</p>`;
+        }
+    } catch (error) {
+        if (currentAdminSection === 'overview') {
+            container.innerHTML = `<p style="color: #ef4444; text-align: center;">Error: ${error.message}</p>`;
+        }
+    }
+}
+
 async function generateAdminReport() {
     const container = document.getElementById('adminContent');
     container.innerHTML = `
@@ -1980,15 +2021,13 @@ function renderAdminReportContent(container, report) {
 }
 
 async function renderAdminReports(container) {
-    container.innerHTML = `
-        <div style="text-align: center; padding: 3rem;">
-            <i class="fas fa-spinner fa-spin" style="font-size: 2rem; color: var(--cyber-gold);"></i>
-            <p style="margin-top: 1rem; color: rgba(255,255,255,0.6);">Loading reports...</p>
-        </div>
-    `;
-    
+    // Loading state already set by showAdminSection
+
     try {
         const response = await api.getComprehensiveReport();
+        // Only render if still on reports section
+        if (currentAdminSection !== 'reports') return;
+
         if (response.success) {
             renderAdminReportsContent(container, response.report);
         } else {
@@ -2003,7 +2042,9 @@ async function renderAdminReports(container) {
             `;
         }
     } catch (error) {
-        container.innerHTML = `<p style="color: #ef4444; text-align: center;">Error: ${error.message}</p>`;
+        if (currentAdminSection === 'reports') {
+            container.innerHTML = `<p style="color: #ef4444; text-align: center;">Error: ${error.message}</p>`;
+        }
     }
 }
 
@@ -2052,22 +2093,22 @@ function renderAdminReportsContent(container, report) {
 }
 
 async function renderAdminUsers(container) {
-    container.innerHTML = `
-        <div style="text-align: center; padding: 3rem;">
-            <i class="fas fa-spinner fa-spin" style="font-size: 2rem; color: var(--cyber-blue);"></i>
-            <p style="margin-top: 1rem; color: rgba(255,255,255,0.6);">Loading users...</p>
-        </div>
-    `;
-    
+    // Loading state already set by showAdminSection
+
     try {
         const response = await api.getComprehensiveReport();
+        // Only render if still on users section
+        if (currentAdminSection !== 'users') return;
+
         if (response.success) {
             renderAdminUsersTable(container, response.report);
         } else {
             container.innerHTML = `<p style="color: #ef4444; text-align: center;">Failed to load users</p>`;
         }
     } catch (error) {
-        container.innerHTML = `<p style="color: #ef4444; text-align: center;">Error: ${error.message}</p>`;
+        if (currentAdminSection === 'users') {
+            container.innerHTML = `<p style="color: #ef4444; text-align: center;">Error: ${error.message}</p>`;
+        }
     }
 }
 
@@ -2124,22 +2165,22 @@ function renderAdminUsersTable(container, report) {
 }
 
 async function renderAdminSecurity(container) {
-    container.innerHTML = `
-        <div style="text-align: center; padding: 3rem;">
-            <i class="fas fa-spinner fa-spin" style="font-size: 2rem; color: var(--cyber-red);"></i>
-            <p style="margin-top: 1rem; color: rgba(255,255,255,0.6);">Loading security data...</p>
-        </div>
-    `;
-    
+    // Loading state already set by showAdminSection
+
     try {
         const response = await api.getComprehensiveReport();
+        // Only render if still on security section
+        if (currentAdminSection !== 'security') return;
+
         if (response.success) {
             renderAdminSecurityContent(container, response.report);
         } else {
             container.innerHTML = `<p style="color: #ef4444; text-align: center;">Failed to load security data</p>`;
         }
     } catch (error) {
-        container.innerHTML = `<p style="color: #ef4444; text-align: center;">Error: ${error.message}</p>`;
+        if (currentAdminSection === 'security') {
+            container.innerHTML = `<p style="color: #ef4444; text-align: center;">Error: ${error.message}</p>`;
+        }
     }
 }
 
