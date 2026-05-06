@@ -1661,6 +1661,55 @@ function printReport() {
     window.print();
 }
 
+function downloadAdminReport(format) {
+    if (!currentReportData) {
+        showNotification('No report data available', 'error');
+        return;
+    }
+    
+    if (format === 'json') {
+        const dataStr = JSON.stringify(currentReportData, null, 2);
+        const blob = new Blob([dataStr], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `cyberguard-admin-report-${new Date().toISOString().split('T')[0]}.json`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+        showNotification('Report downloaded successfully', 'success');
+    }
+}
+
+function printAdminReport() {
+    if (!currentReportData) {
+        showNotification('No report data available', 'error');
+        return;
+    }
+    
+    const printWindow = window.open('', '_blank');
+    printWindow.document.write(`
+        <html>
+        <head>
+            <title>CyberGuard Admin Report</title>
+            <style>
+                body { font-family: Arial, sans-serif; padding: 20px; background: #f5f5f5; }
+                h1 { color: #333; }
+                pre { background: #fff; padding: 20px; border-radius: 8px; overflow-x: auto; }
+            </style>
+        </head>
+        <body>
+            <h1>CyberGuard Academy - Admin Report</h1>
+            <p>Generated: ${new Date().toLocaleString()}</p>
+            <pre>${JSON.stringify(currentReportData, null, 2)}</pre>
+        </body>
+        </html>
+    `);
+    printWindow.document.close();
+    printWindow.print();
+}
+
 // ============================================
 // Admin Dashboard Functions
 // ============================================
@@ -1726,46 +1775,112 @@ async function adminLogout() {
     showNotification('Admin logged out successfully', 'success');
 }
 
-function showAdminSection(section) {
+async function showAdminSection(section) {
     // Update active nav item
     document.querySelectorAll('.admin-nav-item').forEach(item => {
         item.classList.remove('active');
     });
-    event?.target?.classList.add('active');
+    if (event && event.target) {
+        event.target.classList.add('active');
+    }
     
     const content = document.getElementById('adminContent');
     
     switch(section) {
         case 'overview':
-            renderAdminOverview(content);
+            await renderAdminOverview(content);
             break;
         case 'reports':
-            renderAdminReports(content);
+            await renderAdminReports(content);
             break;
         case 'users':
-            renderAdminUsers(content);
+            await renderAdminUsers(content);
             break;
         case 'security':
-            renderAdminSecurity(content);
+            await renderAdminSecurity(content);
             break;
     }
 }
 
-function renderAdminOverview(container) {
+async function renderAdminOverview(container) {
     container.innerHTML = `
         <div style="text-align: center; padding: 3rem;">
-            <i class="fas fa-shield-alt" style="font-size: 4rem; color: var(--cyber-red); margin-bottom: 1rem;"></i>
-            <h2 style="color: white; margin-bottom: 1rem;">Welcome to Admin Dashboard</h2>
-            <p style="color: rgba(255,255,255,0.6); max-width: 600px; margin: 0 auto;">
-                Access comprehensive reports, manage users, and monitor security scans. 
-                Use the sidebar to navigate between different administrative functions.
-            </p>
-            <div style="margin-top: 2rem; display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
-                <button class="btn-primary" onclick="showAdminSection('reports'); document.querySelector('[onclick=\"showAdminSection('reports')\"]').classList.add('active');">
-                    <i class="fas fa-file-alt"></i> View Reports
+            <i class="fas fa-spinner fa-spin" style="font-size: 2rem; color: var(--cyber-blue);"></i>
+            <p style="margin-top: 1rem; color: rgba(255,255,255,0.6);">Loading dashboard data...</p>
+        </div>
+    `;
+    
+    try {
+        const response = await api.getComprehensiveReport();
+        if (response.success) {
+            renderAdminDashboardOverview(container, response.report);
+        } else {
+            container.innerHTML = `<p style="color: #ef4444; text-align: center;">Failed to load dashboard data</p>`;
+        }
+    } catch (error) {
+        container.innerHTML = `<p style="color: #ef4444; text-align: center;">Error: ${error.message}</p>`;
+    }
+}
+
+function renderAdminDashboardOverview(container, report) {
+    container.innerHTML = `
+        <div style="max-width: 1200px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+                <h2 style="color: var(--cyber-gold); margin: 0;"><i class="fas fa-chart-line"></i> Dashboard Overview</h2>
+                <button class="btn-primary" onclick="generateAdminReport()">
+                    <i class="fas fa-sync"></i> Refresh Data
                 </button>
-                <button class="btn-secondary" onclick="generateAdminReport()">
-                    <i class="fas fa-sync-alt"></i> Generate Report
+            </div>
+            
+            <!-- Stats Cards -->
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
+                <div style="background: rgba(6, 182, 212, 0.1); padding: 1.5rem; border-radius: 12px; border-left: 4px solid var(--cyber-blue);">
+                    <div style="font-size: 2.5rem; font-weight: bold; color: var(--cyber-blue);">${report.summary?.total_users || 0}</div>
+                    <div style="color: rgba(255,255,255,0.8); font-size: 0.9rem;">Total Users</div>
+                </div>
+                <div style="background: rgba(16, 185, 129, 0.1); padding: 1.5rem; border-radius: 12px; border-left: 4px solid var(--cyber-green);">
+                    <div style="font-size: 2.5rem; font-weight: bold; color: var(--cyber-green);">${report.summary?.total_games_played || 0}</div>
+                    <div style="color: rgba(255,255,255,0.8); font-size: 0.9rem;">Games Played</div>
+                </div>
+                <div style="background: rgba(249, 115, 22, 0.1); padding: 1.5rem; border-radius: 12px; border-left: 4px solid var(--cyber-orange);">
+                    <div style="font-size: 2.5rem; font-weight: bold; color: var(--cyber-orange);">${report.summary?.total_achievements_earned || 0}</div>
+                    <div style="color: rgba(255,255,255,0.8); font-size: 0.9rem;">Achievements Earned</div>
+                </div>
+                <div style="background: rgba(139, 92, 246, 0.1); padding: 1.5rem; border-radius: 12px; border-left: 4px solid #8b5cf6;">
+                    <div style="font-size: 2.5rem; font-weight: bold; color: #8b5cf6;">${report.summary?.total_security_scans || 0}</div>
+                    <div style="color: rgba(255,255,255,0.8); font-size: 0.9rem;">Security Scans</div>
+                </div>
+            </div>
+            
+            <!-- System Info -->
+            <div style="background: rgba(255,255,255,0.05); padding: 1.5rem; border-radius: 12px; margin-bottom: 1.5rem;">
+                <h3 style="color: var(--cyber-blue); margin-bottom: 1rem;"><i class="fas fa-server"></i> System Information</h3>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem;">
+                    <div>
+                        <p style="color: rgba(255,255,255,0.6); margin: 0; font-size: 0.85rem;">Database Size</p>
+                        <p style="margin: 0.25rem 0; font-weight: 600;">${report.system?.database_size_mb || 0} MB</p>
+                    </div>
+                    <div>
+                        <p style="color: rgba(255,255,255,0.6); margin: 0; font-size: 0.85rem;">Last Generated</p>
+                        <p style="margin: 0.25rem 0; font-weight: 600;">${new Date(report.generated_at).toLocaleString()}</p>
+                    </div>
+                    <div>
+                        <p style="color: rgba(255,255,255,0.6); margin: 0; font-size: 0.85rem;">Active Users (24h)</p>
+                        <p style="margin: 0.25rem 0; font-weight: 600;">${report.user_activity?.active_today || 0}</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Quick Actions -->
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+                <button class="btn-secondary" onclick="showAdminSection('users')" style="padding: 1rem; text-align: left;">
+                    <i class="fas fa-users" style="margin-right: 0.5rem;"></i> Manage Users
+                </button>
+                <button class="btn-secondary" onclick="showAdminSection('reports')" style="padding: 1rem; text-align: left;">
+                    <i class="fas fa-file-alt" style="margin-right: 0.5rem;"></i> View Reports
+                </button>
+                <button class="btn-secondary" onclick="showAdminSection('security')" style="padding: 1rem; text-align: left;">
+                    <i class="fas fa-shield-alt" style="margin-right: 0.5rem;"></i> Security Logs
                 </button>
             </div>
         </div>
@@ -1837,32 +1952,222 @@ function renderAdminReportContent(container, report) {
     currentReportData = report;
 }
 
-function renderAdminReports(container) {
+async function renderAdminReports(container) {
     container.innerHTML = `
         <div style="text-align: center; padding: 3rem;">
-            <h2 style="color: var(--cyber-gold); margin-bottom: 1rem;"><i class="fas fa-file-alt"></i> Reports</h2>
-            <p style="color: rgba(255,255,255,0.6); margin-bottom: 2rem;">Generate and download comprehensive backend reports</p>
-            <button class="btn-primary" onclick="generateAdminReport()" style="padding: 1rem 2rem; font-size: 1.1rem;">
-                <i class="fas fa-chart-line"></i> Generate Full Report
-            </button>
+            <i class="fas fa-spinner fa-spin" style="font-size: 2rem; color: var(--cyber-gold);"></i>
+            <p style="margin-top: 1rem; color: rgba(255,255,255,0.6);">Loading reports...</p>
+        </div>
+    `;
+    
+    try {
+        const response = await api.getComprehensiveReport();
+        if (response.success) {
+            renderAdminReportsContent(container, response.report);
+        } else {
+            container.innerHTML = `
+                <div style="text-align: center; padding: 3rem;">
+                    <h2 style="color: var(--cyber-gold); margin-bottom: 1rem;"><i class="fas fa-file-alt"></i> Reports</h2>
+                    <p style="color: rgba(255,255,255,0.6); margin-bottom: 2rem;">Failed to load reports</p>
+                    <button class="btn-primary" onclick="generateAdminReport()" style="padding: 1rem 2rem; font-size: 1.1rem;">
+                        <i class="fas fa-chart-line"></i> Generate Full Report
+                    </button>
+                </div>
+            `;
+        }
+    } catch (error) {
+        container.innerHTML = `<p style="color: #ef4444; text-align: center;">Error: ${error.message}</p>`;
+    }
+}
+
+function renderAdminReportsContent(container, report) {
+    container.innerHTML = `
+        <div style="max-width: 1200px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+                <h2 style="color: var(--cyber-gold); margin: 0;"><i class="fas fa-file-alt"></i> Reports</h2>
+                <button class="btn-primary" onclick="generateAdminReport()">
+                    <i class="fas fa-sync"></i> Refresh Report
+                </button>
+            </div>
+            
+            <div style="background: rgba(255,255,255,0.05); padding: 2rem; border-radius: 12px; margin-bottom: 1.5rem;">
+                <h3 style="color: var(--cyber-blue); margin-bottom: 1rem;">Report Summary</h3>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+                    <div style="background: rgba(6, 182, 212, 0.1); padding: 1rem; border-radius: 8px;">
+                        <div style="font-size: 1.5rem; font-weight: bold; color: var(--cyber-blue);">${report.summary?.total_users || 0}</div>
+                        <div style="color: rgba(255,255,255,0.7); font-size: 0.85rem;">Total Users</div>
+                    </div>
+                    <div style="background: rgba(16, 185, 129, 0.1); padding: 1rem; border-radius: 8px;">
+                        <div style="font-size: 1.5rem; font-weight: bold; color: var(--cyber-green);">${report.summary?.total_games_played || 0}</div>
+                        <div style="color: rgba(255,255,255,0.7); font-size: 0.85rem;">Games Played</div>
+                    </div>
+                    <div style="background: rgba(249, 115, 22, 0.1); padding: 1rem; border-radius: 8px;">
+                        <div style="font-size: 1.5rem; font-weight: bold; color: var(--cyber-orange);">${report.summary?.total_achievements_earned || 0}</div>
+                        <div style="color: rgba(255,255,255,0.7); font-size: 0.85rem;">Achievements</div>
+                    </div>
+                </div>
+                <div style="margin-top: 1.5rem; display: flex; gap: 1rem;">
+                    <button class="btn-secondary" onclick="downloadAdminReport('json')">
+                        <i class="fas fa-download"></i> Download JSON
+                    </button>
+                    <button class="btn-secondary" onclick="printAdminReport()">
+                        <i class="fas fa-print"></i> Print Report
+                    </button>
+                </div>
+            </div>
+            
+            <div style="background: rgba(255,255,255,0.05); padding: 1.5rem; border-radius: 12px;">
+                <h3 style="color: var(--cyber-blue); margin-bottom: 1rem;">Raw Report Data</h3>
+                <pre style="background: rgba(0,0,0,0.3); padding: 1rem; border-radius: 8px; overflow-x: auto; font-size: 0.85rem; color: rgba(255,255,255,0.8);">${JSON.stringify(report, null, 2)}</pre>
+            </div>
         </div>
     `;
 }
 
-function renderAdminUsers(container) {
+async function renderAdminUsers(container) {
     container.innerHTML = `
         <div style="text-align: center; padding: 3rem;">
-            <h2 style="color: var(--cyber-blue); margin-bottom: 1rem;"><i class="fas fa-users"></i> User Management</h2>
-            <p style="color: rgba(255,255,255,0.6);">User management features coming soon...</p>
+            <i class="fas fa-spinner fa-spin" style="font-size: 2rem; color: var(--cyber-blue);"></i>
+            <p style="margin-top: 1rem; color: rgba(255,255,255,0.6);">Loading users...</p>
+        </div>
+    `;
+    
+    try {
+        const response = await api.getComprehensiveReport();
+        if (response.success) {
+            renderAdminUsersTable(container, response.report);
+        } else {
+            container.innerHTML = `<p style="color: #ef4444; text-align: center;">Failed to load users</p>`;
+        }
+    } catch (error) {
+        container.innerHTML = `<p style="color: #ef4444; text-align: center;">Error: ${error.message}</p>`;
+    }
+}
+
+function renderAdminUsersTable(container, report) {
+    const users = report.users?.recent_users || [];
+    
+    container.innerHTML = `
+        <div style="max-width: 1200px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+                <h2 style="color: var(--cyber-blue); margin: 0;"><i class="fas fa-users"></i> User Management</h2>
+                <button class="btn-primary" onclick="renderAdminUsers(document.getElementById('adminContent'))">
+                    <i class="fas fa-sync"></i> Refresh
+                </button>
+            </div>
+            
+            <div style="background: rgba(255,255,255,0.05); border-radius: 12px; overflow: hidden;">
+                <table style="width: 100%; border-collapse: collapse;">
+                    <thead>
+                        <tr style="background: rgba(6, 182, 212, 0.2);">
+                            <th style="padding: 1rem; text-align: left; color: var(--cyber-blue);">Username</th>
+                            <th style="padding: 1rem; text-align: left; color: var(--cyber-blue);">Email</th>
+                            <th style="padding: 1rem; text-align: center; color: var(--cyber-blue);">Score</th>
+                            <th style="padding: 1rem; text-align: center; color: var(--cyber-blue);">Games</th>
+                            <th style="padding: 1rem; text-align: center; color: var(--cyber-blue);">Joined</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${users.length === 0 ? `
+                            <tr>
+                                <td colspan="5" style="padding: 2rem; text-align: center; color: rgba(255,255,255,0.6);">
+                                    No users found
+                                </td>
+                            </tr>
+                        ` : users.map(user => `
+                            <tr style="border-bottom: 1px solid rgba(255,255,255,0.1);">
+                                <td style="padding: 1rem; color: white;">${user.username}</td>
+                                <td style="padding: 1rem; color: rgba(255,255,255,0.8);">${user.email}</td>
+                                <td style="padding: 1rem; text-align: center; color: var(--cyber-gold);">${user.total_score || 0}</td>
+                                <td style="padding: 1rem; text-align: center; color: var(--cyber-green);">${user.games_completed || 0}</td>
+                                <td style="padding: 1rem; text-align: center; color: rgba(255,255,255,0.6); font-size: 0.85rem;">
+                                    ${new Date(user.created_at).toLocaleDateString()}
+                                </td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            </div>
+            
+            <div style="margin-top: 1rem; color: rgba(255,255,255,0.6); font-size: 0.9rem;">
+                <i class="fas fa-info-circle"></i> Showing ${users.length} recent users
+            </div>
         </div>
     `;
 }
 
-function renderAdminSecurity(container) {
+async function renderAdminSecurity(container) {
     container.innerHTML = `
         <div style="text-align: center; padding: 3rem;">
-            <h2 style="color: var(--cyber-red); margin-bottom: 1rem;"><i class="fas fa-shield-alt"></i> Security</h2>
-            <p style="color: rgba(255,255,255,0.6);">Security monitoring features coming soon...</p>
+            <i class="fas fa-spinner fa-spin" style="font-size: 2rem; color: var(--cyber-red);"></i>
+            <p style="margin-top: 1rem; color: rgba(255,255,255,0.6);">Loading security data...</p>
+        </div>
+    `;
+    
+    try {
+        const response = await api.getComprehensiveReport();
+        if (response.success) {
+            renderAdminSecurityContent(container, response.report);
+        } else {
+            container.innerHTML = `<p style="color: #ef4444; text-align: center;">Failed to load security data</p>`;
+        }
+    } catch (error) {
+        container.innerHTML = `<p style="color: #ef4444; text-align: center;">Error: ${error.message}</p>`;
+    }
+}
+
+function renderAdminSecurityContent(container, report) {
+    const scans = report.security_scans || [];
+    const totalScans = report.summary?.total_security_scans || 0;
+    
+    container.innerHTML = `
+        <div style="max-width: 1200px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+                <h2 style="color: var(--cyber-red); margin: 0;"><i class="fas fa-shield-alt"></i> Security Scans</h2>
+                <button class="btn-primary" onclick="renderAdminSecurity(document.getElementById('adminContent'))">
+                    <i class="fas fa-sync"></i> Refresh
+                </button>
+            </div>
+            
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
+                <div style="background: rgba(239, 68, 68, 0.1); padding: 1.5rem; border-radius: 12px; border-left: 4px solid var(--cyber-red);">
+                    <div style="font-size: 2.5rem; font-weight: bold; color: var(--cyber-red);">${totalScans}</div>
+                    <div style="color: rgba(255,255,255,0.8); font-size: 0.9rem;">Total Scans</div>
+                </div>
+            </div>
+            
+            <div style="background: rgba(255,255,255,0.05); border-radius: 12px; overflow: hidden;">
+                <table style="width: 100%; border-collapse: collapse;">
+                    <thead>
+                        <tr style="background: rgba(239, 68, 68, 0.2);">
+                            <th style="padding: 1rem; text-align: left; color: var(--cyber-red);">URL</th>
+                            <th style="padding: 1rem; text-align: center; color: var(--cyber-red);">Safe</th>
+                            <th style="padding: 1rem; text-align: center; color: var(--cyber-red);">Risk Score</th>
+                            <th style="padding: 1rem; text-align: left; color: var(--cyber-red);">Threat Type</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${scans.length === 0 ? `
+                            <tr>
+                                <td colspan="4" style="padding: 2rem; text-align: center; color: rgba(255,255,255,0.6);">
+                                    No security scans yet
+                                </td>
+                            </tr>
+                        ` : scans.slice(0, 20).map(scan => `
+                            <tr style="border-bottom: 1px solid rgba(255,255,255,0.1);">
+                                <td style="padding: 1rem; color: white; max-width: 300px; overflow: hidden; text-overflow: ellipsis;">${scan.url}</td>
+                                <td style="padding: 1rem; text-align: center;">
+                                    ${scan.is_safe ? 
+                                        '<i class="fas fa-check-circle" style="color: var(--cyber-green);"></i>' : 
+                                        '<i class="fas fa-exclamation-triangle" style="color: var(--cyber-red);"></i>'}
+                                </td>
+                                <td style="padding: 1rem; text-align: center; color: ${scan.risk_score > 50 ? 'var(--cyber-red)' : 'var(--cyber-green)'};">${scan.risk_score}</td>
+                                <td style="padding: 1rem; color: rgba(255,255,255,0.8);">${scan.threat_type || 'None'}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            </div>
         </div>
     `;
 }

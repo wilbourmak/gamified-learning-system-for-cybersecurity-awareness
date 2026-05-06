@@ -383,8 +383,27 @@ const dbHelpers = {
                 GROUP BY url 
                 ORDER BY scan_count DESC 
                 LIMIT 10
+            `).all(),
+            recent_scans: db.prepare(`
+                SELECT su.id, su.url, su.is_safe, su.threat_type, su.risk_score, su.scanned_at, u.username, u.email
+                FROM scanned_urls su
+                JOIN users u ON su.user_id = u.id
+                ORDER BY su.scanned_at DESC
+                LIMIT 50
             `).all()
         };
+
+        // Recent users with stats
+        const recentUsers = db.prepare(`
+            SELECT u.id, u.username, u.email, u.role, u.created_at, 
+                   COALESCE(s.total_score, 0) as total_score, 
+                   COALESCE(s.games_completed, 0) as games_completed
+            FROM users u
+            LEFT JOIN user_stats s ON u.id = s.user_id
+            WHERE u.role != 'admin'
+            ORDER BY u.created_at DESC
+            LIMIT 20
+        `).all();
 
         // System health
         const dbSize = fs.statSync(DB_PATH).size;
@@ -413,10 +432,22 @@ const dbHelpers = {
                 total_security_scans: scanStats.total_scans,
                 database_size_mb: systemHealth.database_size_mb
             },
-            users: userStats,
+            users: {
+                ...userStats,
+                recent_users: recentUsers
+            },
             games: gameStats,
             achievements: achievementStats,
-            security_scans: scanStats,
+            security_scans: scanStats.recent_scans.map(scan => ({
+                id: scan.id,
+                url: scan.url,
+                is_safe: scan.is_safe === 1,
+                threat_type: scan.threat_type,
+                risk_score: scan.risk_score,
+                scanned_at: scan.scanned_at,
+                username: scan.username,
+                email: scan.email
+            })),
             system: systemHealth
         };
     },
