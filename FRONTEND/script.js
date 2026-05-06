@@ -190,7 +190,12 @@ class GameManager {
                     response.newAchievements.forEach(achievement => {
                         if (!this.achievements.includes(achievement.id)) {
                             this.achievements.push(achievement.id);
-                            this.showAchievement(achievement);
+                            // Map backend 'name' to frontend 'title'
+                            this.showAchievement({
+                                id: achievement.id,
+                                title: achievement.name || achievement.title,
+                                description: achievement.description
+                            });
                         }
                     });
                     this.updateUI();
@@ -861,7 +866,9 @@ class URLScannerGame {
         try {
             const response = await api.getScanHistory();
             if (response.success && response.scans) {
-                this.scanHistory = response.scans.slice(0, 10);
+                // Ensure scans is an array
+                const scans = Array.isArray(response.scans) ? response.scans : [];
+                this.scanHistory = scans.slice(0, 10);
                 this.updateHistoryDisplay();
                 this.updateScanCount();
             }
@@ -2255,7 +2262,12 @@ async function renderAdminSecurity(container) {
 }
 
 function renderAdminSecurityContent(container, report) {
-    const scans = report.security_scans || [];
+    // Ensure scans is always an array
+    let scans = report.security_scans || [];
+    if (!Array.isArray(scans)) {
+        console.warn('security_scans is not an array:', scans);
+        scans = [];
+    }
     const totalScans = report.summary?.total_security_scans || 0;
     
     container.innerHTML = `
