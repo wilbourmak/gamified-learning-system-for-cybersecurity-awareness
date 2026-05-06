@@ -517,6 +517,7 @@
     </div>
 
     <!-- Admin Dashboard -->
+    <div class="admin-overlay" id="adminOverlay" onclick="toggleAdminMobileMenu()"></div>
     <div id="adminDashboard" class="admin-dashboard hidden">
         <div class="admin-sidebar">
             <div class="admin-logo">
@@ -524,26 +525,55 @@
                 <span>Admin Panel</span>
             </div>
             <nav class="admin-nav">
-                <button class="admin-nav-item active" onclick="showAdminSection('overview')">
-                    <i class="fas fa-chart-line"></i> Overview
+                <div class="admin-nav-label">Main</div>
+                <button class="admin-nav-item active" onclick="showAdminSection('overview')" data-section="overview">
+                    <i class="fas fa-chart-line"></i>
+                    <span>Overview</span>
+                    <kbd class="nav-shortcut">1</kbd>
                 </button>
-                <button class="admin-nav-item" onclick="showAdminSection('reports')">
-                    <i class="fas fa-file-alt"></i> Reports
+                <button class="admin-nav-item" onclick="showAdminSection('reports')" data-section="reports">
+                    <i class="fas fa-file-alt"></i>
+                    <span>Reports</span>
+                    <kbd class="nav-shortcut">2</kbd>
                 </button>
-                <button class="admin-nav-item" onclick="showAdminSection('users')">
-                    <i class="fas fa-users"></i> Users
+
+                <div class="admin-nav-label">Management</div>
+                <button class="admin-nav-item" onclick="showAdminSection('users')" data-section="users">
+                    <i class="fas fa-users"></i>
+                    <span>Users</span>
+                    <kbd class="nav-shortcut">3</kbd>
                 </button>
-                <button class="admin-nav-item" onclick="showAdminSection('security')">
-                    <i class="fas fa-shield-alt"></i> Security
+                <button class="admin-nav-item" onclick="showAdminSection('security')" data-section="security">
+                    <i class="fas fa-shield-alt"></i>
+                    <span>Security</span>
+                    <kbd class="nav-shortcut">4</kbd>
                 </button>
             </nav>
-            <button class="admin-logout" onclick="adminLogout()">
-                <i class="fas fa-sign-out-alt"></i> Logout
-            </button>
+
+            <div class="admin-sidebar-footer">
+                <button class="admin-nav-item back-to-site" onclick="hideAdminDashboard()">
+                    <i class="fas fa-arrow-left"></i>
+                    <span>Back to Site</span>
+                </button>
+                <button class="admin-logout" onclick="adminLogout()">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span>Logout</span>
+                    <kbd class="nav-shortcut">Esc</kbd>
+                </button>
+            </div>
         </div>
         <div class="admin-main">
             <div class="admin-header">
-                <h1><i class="fas fa-shield-alt"></i> Administrative Dashboard</h1>
+                <div class="admin-header-left">
+                    <button class="mobile-menu-toggle" onclick="toggleAdminMobileMenu()" aria-label="Toggle menu">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <nav class="admin-breadcrumb">
+                        <span class="breadcrumb-item">Admin</span>
+                        <i class="fas fa-chevron-right breadcrumb-separator"></i>
+                        <span class="breadcrumb-item active" id="adminBreadcrumb">Overview</span>
+                    </nav>
+                </div>
                 <div class="admin-user">
                     <span id="adminUserName">Admin</span>
                     <i class="fas fa-user-shield"></i>

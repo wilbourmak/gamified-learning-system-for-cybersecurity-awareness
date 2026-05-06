@@ -1749,6 +1749,166 @@ body {
     overflow-y: auto;
 }
 
+/* Admin Navigation Labels */
+.admin-nav-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: rgba(255, 255, 255, 0.4);
+    padding: 1rem 1.25rem 0.5rem;
+    margin-top: 0.5rem;
+}
+
+/* Navigation Shortcuts */
+.nav-shortcut {
+    margin-left: auto;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 4px;
+    padding: 0.2rem 0.4rem;
+    font-size: 0.7rem;
+    font-family: monospace;
+    color: rgba(255, 255, 255, 0.5);
+    min-width: 1.5rem;
+    text-align: center;
+}
+
+.admin-nav-item:hover .nav-shortcut,
+.admin-nav-item.active .nav-shortcut {
+    background: rgba(239, 68, 68, 0.2);
+    border-color: rgba(239, 68, 68, 0.4);
+    color: var(--cyber-red);
+}
+
+/* Admin Sidebar Footer */
+.admin-sidebar-footer {
+    margin-top: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    padding-top: 1rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.back-to-site {
+    color: rgba(255, 255, 255, 0.6) !important;
+    font-size: 0.9rem !important;
+}
+
+.back-to-site:hover {
+    background: rgba(16, 185, 129, 0.1) !important;
+    color: var(--cyber-green) !important;
+}
+
+.back-to-site:hover .nav-shortcut {
+    background: rgba(16, 185, 129, 0.2);
+    border-color: rgba(16, 185, 129, 0.4);
+    color: var(--cyber-green);
+}
+
+/* Admin Header Left & Breadcrumb */
+.admin-header-left {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.mobile-menu-toggle {
+    display: none;
+    background: none;
+    border: none;
+    color: white;
+    font-size: 1.25rem;
+    cursor: pointer;
+    padding: 0.5rem;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+}
+
+.mobile-menu-toggle:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.admin-breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.breadcrumb-item {
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 0.95rem;
+}
+
+.breadcrumb-item.active {
+    color: white;
+    font-weight: 600;
+}
+
+.breadcrumb-separator {
+    color: rgba(255, 255, 255, 0.3);
+    font-size: 0.75rem;
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+    .admin-sidebar {
+        position: fixed;
+        left: -260px;
+        top: 0;
+        height: 100%;
+        z-index: 2600;
+        transition: left 0.3s ease;
+    }
+
+    .admin-sidebar.mobile-open {
+        left: 0;
+    }
+
+    .admin-main {
+        width: 100%;
+    }
+
+    .mobile-menu-toggle {
+        display: block;
+    }
+
+    .admin-content {
+        padding: 1rem;
+    }
+
+    .admin-breadcrumb .breadcrumb-item:first-child {
+        display: none;
+    }
+
+    .admin-breadcrumb .breadcrumb-separator {
+        display: none;
+    }
+}
+
+/* Admin Overlay for mobile */
+.admin-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 2550;
+}
+
+.admin-overlay.active {
+    display: block;
+}
+
+@media (max-width: 768px) {
+    .admin-overlay.active {
+        display: block;
+    }
+}
+
 /* Hide regular content when admin is logged in */
 body.admin-logged-in .hero,
 body.admin-logged-in .games-section,

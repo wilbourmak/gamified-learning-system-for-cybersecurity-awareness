@@ -1778,16 +1778,38 @@ async function adminLogout() {
 // Track current admin section to prevent race conditions
 let currentAdminSection = null;
 
+// Admin section names for breadcrumb
+const adminSectionNames = {
+    'overview': 'Overview',
+    'reports': 'Reports',
+    'users': 'Users',
+    'security': 'Security'
+};
+
 async function showAdminSection(section) {
     // Update current section tracker
     currentAdminSection = section;
 
-    // Update active nav item
-    document.querySelectorAll('.admin-nav-item').forEach(item => {
+    // Update active nav item using data attribute
+    document.querySelectorAll('.admin-nav-item[data-section]').forEach(item => {
         item.classList.remove('active');
+        if (item.dataset.section === section) {
+            item.classList.add('active');
+        }
     });
-    if (event && event.target) {
-        event.target.classList.add('active');
+
+    // Update breadcrumb
+    const breadcrumb = document.getElementById('adminBreadcrumb');
+    if (breadcrumb) {
+        breadcrumb.textContent = adminSectionNames[section] || section;
+    }
+
+    // Close mobile menu if open
+    const sidebar = document.querySelector('.admin-sidebar');
+    const overlay = document.getElementById('adminOverlay');
+    if (sidebar && sidebar.classList.contains('mobile-open')) {
+        sidebar.classList.remove('mobile-open');
+        if (overlay) overlay.classList.remove('active');
     }
 
     const content = document.getElementById('adminContent');
@@ -1815,6 +1837,54 @@ async function showAdminSection(section) {
             break;
     }
 }
+
+// Mobile menu toggle
+function toggleAdminMobileMenu() {
+    const sidebar = document.querySelector('.admin-sidebar');
+    const overlay = document.getElementById('adminOverlay');
+    if (sidebar) {
+        sidebar.classList.toggle('mobile-open');
+        if (overlay) overlay.classList.toggle('active');
+    }
+}
+
+// Keyboard shortcuts for admin navigation
+function setupAdminKeyboardShortcuts() {
+    document.addEventListener('keydown', function(e) {
+        // Only work when admin dashboard is visible
+        const adminDashboard = document.getElementById('adminDashboard');
+        if (!adminDashboard || adminDashboard.classList.contains('hidden')) return;
+
+        // Ignore if typing in an input
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+
+        switch(e.key) {
+            case '1':
+                e.preventDefault();
+                showAdminSection('overview');
+                break;
+            case '2':
+                e.preventDefault();
+                showAdminSection('reports');
+                break;
+            case '3':
+                e.preventDefault();
+                showAdminSection('users');
+                break;
+            case '4':
+                e.preventDefault();
+                showAdminSection('security');
+                break;
+            case 'Escape':
+                e.preventDefault();
+                adminLogout();
+                break;
+        }
+    });
+}
+
+// Initialize keyboard shortcuts when page loads
+document.addEventListener('DOMContentLoaded', setupAdminKeyboardShortcuts);
 
 async function renderAdminOverview(container) {
     // Don't re-show loading if already cleared by showAdminSection
